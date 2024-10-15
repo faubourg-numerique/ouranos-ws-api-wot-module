@@ -8,6 +8,7 @@ use API\Managers\PropertyManager;
 use API\Modules\WoT\Managers\WoTThingDescriptionManager;
 use API\Modules\WoT\Managers\WoTPropertyManager;
 use API\Modules\WoT\Managers\WoTActionManager;
+use API\Modules\WoT\Managers\WoTActionInputPropertyManager;
 use API\Modules\WoT\Managers\WoTEventManager;
 use API\Managers\WorkspaceManager;
 use API\Modules\WoT\Models\WoTThingDescription;
@@ -23,6 +24,7 @@ class WoTThingDescriptionController extends Controller
     private WoTThingDescriptionManager $woTThingDescriptionManager;
     private WoTPropertyManager $woTPropertyManager;
     private WoTActionManager $woTActionManager;
+    private WoTActionInputPropertyManager $woTActionInputPropertyManager;
     private WoTEventManager $woTEventManager;
 
     public function __construct()
@@ -33,6 +35,7 @@ class WoTThingDescriptionController extends Controller
         $this->woTThingDescriptionManager = new WoTThingDescriptionManager($systemEntityManager);
         $this->woTPropertyManager = new WoTPropertyManager($systemEntityManager);
         $this->woTActionManager = new WoTActionManager($systemEntityManager);
+        $this->woTActionInputPropertyManager = new WoTActionInputPropertyManager($systemEntityManager);
         $this->woTEventManager = new WoTEventManager($systemEntityManager);
     }
 
@@ -142,7 +145,7 @@ class WoTThingDescriptionController extends Controller
                 $td["properties"][$property->name] = [
                     "title" => $woTProperty->name,
                     "type" => strtolower($property->propertyNgsiLdValueType),
-                    "observable" => false,
+                    "observable" => true,
                     "readOnly" => false
                 ];
 
@@ -163,6 +166,38 @@ class WoTThingDescriptionController extends Controller
                 $td["actions"][$woTAction->name] = [
                     "title" => $woTAction->description ?? $woTAction->name
                 ];
+
+                $query = "hasWorkspace==\"{$workspace->id}\";hasWoTAction==\"{$woTAction->id}\"";
+                $woTActionInputProperties = $this->woTActionInputPropertyManager->readMultiple($query);
+
+                if ($woTActionInputProperties) {
+                    $td["actions"][$woTAction->name]["input"] = [
+                        "type" => "object",
+                        "properties" => []
+                    ];
+
+                    foreach($woTActionInputProperties as $woTActionInputProperty) {
+                        $td["actions"][$woTAction->name]["input"]["properties"][$woTActionInputProperty->name] = [
+                            "type" => $woTActionInputProperty->propertyType
+                        ];
+
+                        if ($woTActionInputProperty->minimum !== null) {
+                            $td["actions"][$woTAction->name]["input"]["properties"][$woTActionInputProperty->name]["min"] = $woTActionInputProperty->minimum;
+                        }
+
+                        if ($woTActionInputProperty->maximum !== null) {
+                            $td["actions"][$woTAction->name]["input"]["properties"][$woTActionInputProperty->name]["max"] = $woTActionInputProperty->maximum;
+                        }
+
+                        if ($woTActionInputProperty->enum !== null) {
+                            $td["actions"][$woTAction->name]["input"]["properties"][$woTActionInputProperty->name]["enum"] = $woTActionInputProperty->enum;
+                        }
+
+                        if ($woTActionInputProperty->required) {
+                            $td["actions"][$woTAction->name]["input"]["required"][] = $woTActionInputProperty->name;
+                        }
+                    }
+                }
             }
         }
 
