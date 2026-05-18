@@ -82,7 +82,7 @@ class WoTProperty extends Model
         $this->hasWorkspace = $entity->getRelationship("hasWorkspace");
 
         if ($entity->propertyExists("enum")) {
-            $this->enum = $entity->getProperty("enum");
+            $this->enum = !is_array($entity->getProperty("enum")) ? [$entity->getProperty("enum")] : $entity->getProperty("enum");
         }
         if ($entity->propertyExists("maximum")) {
             $this->maximum = $entity->getProperty("maximum");
