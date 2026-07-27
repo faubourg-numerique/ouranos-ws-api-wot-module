@@ -17,6 +17,7 @@ class WoTThingDescription extends Model
     public ?string $description = null;
     public array $positionInChart;
     public string $hasType;
+    public ?string $hasGroup = null;
     public string $hasWorkspace;
 
     public function toEntity(): Entity
@@ -30,6 +31,9 @@ class WoTThingDescription extends Model
         }
         $entity->setProperty("positionInChart", $this->positionInChart);
         $entity->setRelationship("hasType", $this->hasType);
+        if (!is_null($this->hasGroup)) {
+            $entity->setRelationship("hasGroup", $this->hasGroup);
+        }
         $entity->setRelationship("hasWorkspace", $this->hasWorkspace);
         return $entity;
     }
@@ -43,6 +47,9 @@ class WoTThingDescription extends Model
         }
         $this->positionInChart = $entity->getProperty("positionInChart");
         $this->hasType = $entity->getRelationship("hasType");
+        if ($entity->relationshipExists("hasGroup")) {
+            $this->hasGroup = $entity->getRelationship("hasGroup");
+        }
         $this->hasWorkspace = $entity->getRelationship("hasWorkspace");
     }
 }
