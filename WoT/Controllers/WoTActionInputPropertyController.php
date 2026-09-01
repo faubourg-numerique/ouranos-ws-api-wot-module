@@ -23,6 +23,7 @@ class WoTActionInputPropertyController extends Controller
         global $systemEntityManager;
         $this->workspaceManager = new WorkspaceManager($systemEntityManager);
         $this->woTActionInputPropertyManager = new WoTActionInputPropertyManager($systemEntityManager);
+        $this->woTThingDescriptionManager = new WoTThingDescriptionManager($systemEntityManager);
     }
 
     public function index(string $workspaceId): void
