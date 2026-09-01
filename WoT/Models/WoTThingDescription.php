@@ -16,6 +16,9 @@ class WoTThingDescription extends Model
     public string $name;
     public ?string $description = null;
     public array $positionInChart;
+    public ?bool $publishRequired = null;
+    public ?bool $deployRequired = null;
+    public ?bool $restartRequired = null;
     public string $hasType;
     public ?string $hasGroup = null;
     public string $hasWorkspace;
@@ -30,6 +33,15 @@ class WoTThingDescription extends Model
             $entity->setProperty("description", $this->description);
         }
         $entity->setProperty("positionInChart", $this->positionInChart);
+        if (!is_null($this->publishRequired)) {
+            $entity->setProperty("publishRequired", $this->publishRequired);
+        }
+        if (!is_null($this->deployRequired)) {
+            $entity->setProperty("deployRequired", $this->deployRequired);
+        }
+        if (!is_null($this->restartRequired)) {
+            $entity->setProperty("restartRequired", $this->restartRequired);
+        }
         $entity->setRelationship("hasType", $this->hasType);
         if (!is_null($this->hasGroup)) {
             $entity->setRelationship("hasGroup", $this->hasGroup);
@@ -46,6 +58,15 @@ class WoTThingDescription extends Model
             $this->description = $entity->getProperty("description");
         }
         $this->positionInChart = $entity->getProperty("positionInChart");
+        if ($entity->propertyExists("publishRequired")) {
+            $this->publishRequired = $entity->getProperty("publishRequired");
+        }
+        if ($entity->propertyExists("deployRequired")) {
+            $this->deployRequired = $entity->getProperty("deployRequired");
+        }
+        if ($entity->propertyExists("restartRequired")) {
+            $this->restartRequired = $entity->getProperty("restartRequired");
+        }
         $this->hasType = $entity->getRelationship("hasType");
         if ($entity->relationshipExists("hasGroup")) {
             $this->hasGroup = $entity->getRelationship("hasGroup");

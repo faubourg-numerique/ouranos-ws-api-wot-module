@@ -137,10 +137,10 @@ class WoTThingDescriptionController extends Controller
             "security" => "nosec_sc"
         ];
 
-        if($woTProperties) {
+        if ($woTProperties) {
             $td["properties"] = [];
 
-            foreach($woTProperties as $woTProperty) {
+            foreach ($woTProperties as $woTProperty) {
                 $property = $this->propertyManager->readOne($woTProperty->hasProperty);
                 $td["properties"][$property->name] = [
                     "title" => $woTProperty->name,
@@ -149,8 +149,8 @@ class WoTThingDescriptionController extends Controller
                     "readOnly" => false
                 ];
 
-                if($property->propertyNgsiLdValueType === NgsiLdPropertyValueType::Number->value) {
-                    if($woTProperty->capacityType === "Range") {
+                if ($property->propertyNgsiLdValueType === NgsiLdPropertyValueType::Number->value) {
+                    if ($woTProperty->capacityType === "Range") {
                         $capacityValue = json_decode($woTProperty->capacityValue, true);
                         $td["properties"][$property->name]["min"] = $capacityValue[0];
                         $td["properties"][$property->name]["max"] = $capacityValue[1];
@@ -159,10 +159,10 @@ class WoTThingDescriptionController extends Controller
             }
         }
 
-        if($woTActions) {
+        if ($woTActions) {
             $td["actions"] = [];
 
-            foreach($woTActions as $woTAction) {
+            foreach ($woTActions as $woTAction) {
                 $td["actions"][$woTAction->name] = [
                     "title" => $woTAction->description ?? $woTAction->name
                 ];
@@ -176,7 +176,7 @@ class WoTThingDescriptionController extends Controller
                         "properties" => []
                     ];
 
-                    foreach($woTActionInputProperties as $woTActionInputProperty) {
+                    foreach ($woTActionInputProperties as $woTActionInputProperty) {
                         $td["actions"][$woTAction->name]["input"]["properties"][$woTActionInputProperty->name] = [
                             "type" => $woTActionInputProperty->propertyType
                         ];
@@ -201,10 +201,10 @@ class WoTThingDescriptionController extends Controller
             }
         }
 
-        if($woTEvents) {
+        if ($woTEvents) {
             $td["events"] = [];
 
-            foreach($woTEvents as $woTEvent) {
+            foreach ($woTEvents as $woTEvent) {
                 $td["events"][$woTEvent->name] = [
                     "title" => $woTEvent->description ?? $woTEvent->name
                 ];
