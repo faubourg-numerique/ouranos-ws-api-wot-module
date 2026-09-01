@@ -5,6 +5,7 @@ namespace API\Modules\WoT\Controllers;
 use API\Enums\MimeType;
 use API\Modules\WoT\Managers\WoTActionManager;
 use API\Modules\WoT\Managers\WoTPropertyManager;
+use API\Modules\WoT\Managers\WoTThingDescriptionManager;
 use API\Managers\PropertyManager;
 use API\Managers\WorkspaceManager;
 use API\Modules\WoT\Models\WoTAction;
@@ -18,6 +19,7 @@ class WoTActionController extends Controller
     private WorkspaceManager $workspaceManager;
     private WoTActionManager $woTActionManager;
     private WoTPropertyManager $woTPropertyManager;
+    private WoTThingDescriptionManager $woTThingDescriptionManager;
     private PropertyManager $propertyManager;
 
     public function __construct()
@@ -26,6 +28,7 @@ class WoTActionController extends Controller
         $this->workspaceManager = new WorkspaceManager($systemEntityManager);
         $this->woTActionManager = new WoTActionManager($systemEntityManager);
         $this->woTPropertyManager = new WoTPropertyManager($systemEntityManager);
+        $this->woTThingDescriptionManager = new WoTThingDescriptionManager($systemEntityManager);
         $this->propertyManager = new PropertyManager($systemEntityManager);
     }
 
@@ -51,7 +54,14 @@ class WoTActionController extends Controller
         $woTAction = new WoTAction($data);
         $woTAction->id = Utils::generateUniqueNgsiLdUrn(WoTAction::TYPE);
 
+        $woTThingDescription = $this->woTThingDescriptionManager->readOne($woTAction->hasWoTThingDescription);
+
         $this->woTActionManager->create($woTAction);
+
+        $woTThingDescription->publishRequired = true;
+        $woTThingDescription->deployRequired = true;
+
+        $this->woTThingDescriptionManager->update($woTThingDescription);
 
         API::response()->setStatusCode(HttpResponseStatusCodes::HTTP_CREATED);
         API::response()->setHeader("Content-Type", MimeType::Json->value);
@@ -81,7 +91,14 @@ class WoTActionController extends Controller
 
         $woTAction->update($data);
 
+        $woTThingDescription = $this->woTThingDescriptionManager->readOne($woTAction->hasWoTThingDescription);
+
         $this->woTActionManager->update($woTAction);
+
+        $woTThingDescription->publishRequired = true;
+        $woTThingDescription->deployRequired = true;
+
+        $this->woTThingDescriptionManager->update($woTThingDescription);
 
         API::response()->setStatusCode(HttpResponseStatusCodes::HTTP_OK);
         API::response()->setHeader("Content-Type", MimeType::Json->value);
@@ -95,7 +112,14 @@ class WoTActionController extends Controller
 
         $woTAction = $this->woTActionManager->readOne($id);
 
+        $woTThingDescription = $this->woTThingDescriptionManager->readOne($woTAction->hasWoTThingDescription);
+
         $this->woTActionManager->delete($woTAction);
+
+        $woTThingDescription->publishRequired = true;
+        $woTThingDescription->deployRequired = true;
+
+        $this->woTThingDescriptionManager->update($woTThingDescription);
 
         API::response()->setStatusCode(HttpResponseStatusCodes::HTTP_NO_CONTENT);
         API::response()->send();
@@ -122,7 +146,7 @@ class WoTActionController extends Controller
         $query = "hasWoTAction==\"{$woTAction->id}\"";
 
         foreach ($data["woTProperties"] as $woTPropertyId => $attribute) {
-			$woTProperty = $this->woTPropertyManager->readOne($woTPropertyId);
+            $woTProperty = $this->woTPropertyManager->readOne($woTPropertyId);
             $property = $this->propertyManager->readOne($woTProperty->hasProperty);
 
             switch ($woTProperty->capacityType) {

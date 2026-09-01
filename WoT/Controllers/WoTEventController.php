@@ -4,6 +4,7 @@ namespace API\Modules\WoT\Controllers;
 
 use API\Enums\MimeType;
 use API\Modules\WoT\Managers\WoTEventManager;
+use API\Modules\WoT\Managers\WoTThingDescriptionManager;
 use API\Managers\WorkspaceManager;
 use API\Modules\WoT\Models\WoTEvent;
 use API\StaticClasses\Utils;
@@ -15,12 +16,14 @@ class WoTEventController extends Controller
 {
     private WorkspaceManager $workspaceManager;
     private WoTEventManager $woTEventManager;
+    private WoTThingDescriptionManager $woTThingDescriptionManager;
 
     public function __construct()
     {
         global $systemEntityManager;
         $this->workspaceManager = new WorkspaceManager($systemEntityManager);
         $this->woTEventManager = new WoTEventManager($systemEntityManager);
+        $this->woTThingDescriptionManager = new WoTThingDescriptionManager($systemEntityManager);
     }
 
     public function index(string $workspaceId): void
@@ -45,7 +48,14 @@ class WoTEventController extends Controller
         $woTEvent = new WoTEvent($data);
         $woTEvent->id = Utils::generateUniqueNgsiLdUrn(WoTEvent::TYPE);
 
+        $woTThingDescription = $this->woTThingDescriptionManager->readOne($woTEvent->hasWoTThingDescription);
+
         $this->woTEventManager->create($woTEvent);
+
+        $woTThingDescription->publishRequired = true;
+        $woTThingDescription->deployRequired = true;
+
+        $this->woTThingDescriptionManager->update($woTThingDescription);
 
         API::response()->setStatusCode(HttpResponseStatusCodes::HTTP_CREATED);
         API::response()->setHeader("Content-Type", MimeType::Json->value);
@@ -75,7 +85,14 @@ class WoTEventController extends Controller
 
         $woTEvent->update($data);
 
+        $woTThingDescription = $this->woTThingDescriptionManager->readOne($woTEvent->hasWoTThingDescription);
+
         $this->woTEventManager->update($woTEvent);
+
+        $woTThingDescription->publishRequired = true;
+        $woTThingDescription->deployRequired = true;
+
+        $this->woTThingDescriptionManager->update($woTThingDescription);
 
         API::response()->setStatusCode(HttpResponseStatusCodes::HTTP_OK);
         API::response()->setHeader("Content-Type", MimeType::Json->value);
@@ -89,7 +106,14 @@ class WoTEventController extends Controller
 
         $woTEvent = $this->woTEventManager->readOne($id);
 
+        $woTThingDescription = $this->woTThingDescriptionManager->readOne($woTEvent->hasWoTThingDescription);
+
         $this->woTEventManager->delete($woTEvent);
+
+        $woTThingDescription->publishRequired = true;
+        $woTThingDescription->deployRequired = true;
+
+        $this->woTThingDescriptionManager->update($woTThingDescription);
 
         API::response()->setStatusCode(HttpResponseStatusCodes::HTTP_NO_CONTENT);
         API::response()->send();
