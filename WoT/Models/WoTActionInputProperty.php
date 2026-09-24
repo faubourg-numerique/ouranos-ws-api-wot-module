@@ -72,7 +72,7 @@ class WoTActionInputProperty extends Model
             $this->maximum = $entity->getProperty("maximum");
         }
         if ($entity->propertyExists("enum")) {
-            $this->enum = $entity->getProperty("enum");
+            $this->enum = !is_array($entity->getProperty("enum")) ? [$entity->getProperty("enum")] : $entity->getProperty("enum");
         }
         $this->required = $entity->getProperty("required");
         $this->hasWoTAction = $entity->getRelationship("hasWoTAction");
