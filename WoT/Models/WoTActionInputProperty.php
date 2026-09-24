@@ -16,6 +16,7 @@ class WoTActionInputProperty extends Model
     public string $name;
     public ?string $description = null;
     public string $propertyType;
+    public ?string $metaType = null;
     public int|float|null $minimum = null;
     public int|float|null $maximum = null;
     public ?array $enum = null;
@@ -34,6 +35,9 @@ class WoTActionInputProperty extends Model
             $entity->setProperty("description", $this->description);
         }
         $entity->setProperty("propertyType", $this->propertyType);
+        if (!is_null($this->metaType)) {
+            $entity->setProperty("metaType", $this->metaType);
+        }
         if (!is_null($this->minimum)) {
             $entity->setProperty("minimum", $this->minimum);
         }
@@ -58,6 +62,9 @@ class WoTActionInputProperty extends Model
             $this->description = $entity->getProperty("description");
         }
         $this->propertyType = $entity->getProperty("propertyType");
+        if ($entity->propertyExists("metaType")) {
+            $this->metaType = $entity->getProperty("metaType");
+        }
         if ($entity->propertyExists("minimum")) {
             $this->minimum = $entity->getProperty("minimum");
         }
