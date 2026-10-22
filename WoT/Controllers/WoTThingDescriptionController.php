@@ -3,7 +3,6 @@
 namespace API\Modules\WoT\Controllers;
 
 use API\Enums\MimeType;
-use API\Enums\NgsiLdPropertyValueType;
 use API\Managers\PropertyManager;
 use API\Modules\WoT\Managers\WoTThingDescriptionManager;
 use API\Modules\WoT\Managers\WoTPropertyManager;
@@ -127,8 +126,10 @@ class WoTThingDescriptionController extends Controller
         $woTEvents = $this->woTEventManager->readMultiple($query);
 
         $td = [
-            "@context" => "https://www.w3.org/2019/wot/td/v1",
+            "@context" => "https://www.w3.org/2022/wot/td/v1.1",
+            "@type" => "tm:ThingModel",
             "title" => $woTThingDescription->name,
+            "description" => $woTThingDescription->description ?: $woTThingDescription->name,
             "securityDefinitions" => [
                 "nosec_sc" => [
                     "scheme" => "nosec"
@@ -144,17 +145,26 @@ class WoTThingDescriptionController extends Controller
                 $property = $this->propertyManager->readOne($woTProperty->hasProperty);
                 $td["properties"][$property->name] = [
                     "title" => $woTProperty->name,
-                    "type" => strtolower($property->propertyNgsiLdValueType),
-                    "observable" => true,
-                    "readOnly" => false
+                    "description" => $woTProperty->description ?: $woTProperty->name,
+                    "type" => $woTProperty->propertyType ?? strtolower($property->propertyNgsiLdValueType),
+                    "observable" => $woTProperty->observable ?? true,
+                    "readOnly" => $woTProperty->readonly ?? false
                 ];
 
-                if ($property->propertyNgsiLdValueType === NgsiLdPropertyValueType::Number->value) {
-                    if ($woTProperty->capacityType === "Range") {
-                        $capacityValue = json_decode($woTProperty->capacityValue, true);
-                        $td["properties"][$property->name]["min"] = $capacityValue[0];
-                        $td["properties"][$property->name]["max"] = $capacityValue[1];
-                    }
+                if ($woTProperty->minimum !== null) {
+                    $td["properties"][$property->name]["minimum"] = $woTProperty->minimum;
+                }
+
+                if ($woTProperty->maximum !== null) {
+                    $td["properties"][$property->name]["maximum"] = $woTProperty->maximum;
+                }
+
+                if ($woTProperty->enum !== null) {
+                    $td["properties"][$property->name]["enum"] = $woTProperty->enum;
+                }
+
+                if ($woTProperty->temporal !== null) {
+                    $td["properties"][$property->name]["temporal"] = $woTProperty->temporal;
                 }
             }
         }
@@ -164,7 +174,8 @@ class WoTThingDescriptionController extends Controller
 
             foreach ($woTActions as $woTAction) {
                 $td["actions"][$woTAction->name] = [
-                    "title" => $woTAction->description ?? $woTAction->name
+                    "title" => $woTAction->name,
+                    "description" => $woTAction->description ?: $woTAction->name
                 ];
 
                 $query = "hasWorkspace==\"{$workspace->id}\";hasWoTAction==\"{$woTAction->id}\"";
@@ -178,15 +189,20 @@ class WoTThingDescriptionController extends Controller
 
                     foreach ($woTActionInputProperties as $woTActionInputProperty) {
                         $td["actions"][$woTAction->name]["input"]["properties"][$woTActionInputProperty->name] = [
+                            "description" => $woTActionInputProperty->description ?: $woTActionInputProperty->name,
                             "type" => $woTActionInputProperty->propertyType
                         ];
 
+                        if ($woTActionInputProperty->metaType !== null) {
+                            $td["actions"][$woTAction->name]["input"]["properties"][$woTActionInputProperty->name]["@type"] = $woTActionInputProperty->metaType;
+                        }
+
                         if ($woTActionInputProperty->minimum !== null) {
-                            $td["actions"][$woTAction->name]["input"]["properties"][$woTActionInputProperty->name]["min"] = $woTActionInputProperty->minimum;
+                            $td["actions"][$woTAction->name]["input"]["properties"][$woTActionInputProperty->name]["minimum"] = $woTActionInputProperty->minimum;
                         }
 
                         if ($woTActionInputProperty->maximum !== null) {
-                            $td["actions"][$woTAction->name]["input"]["properties"][$woTActionInputProperty->name]["max"] = $woTActionInputProperty->maximum;
+                            $td["actions"][$woTAction->name]["input"]["properties"][$woTActionInputProperty->name]["maximum"] = $woTActionInputProperty->maximum;
                         }
 
                         if ($woTActionInputProperty->enum !== null) {
@@ -205,9 +221,28 @@ class WoTThingDescriptionController extends Controller
             $td["events"] = [];
 
             foreach ($woTEvents as $woTEvent) {
+                $woTProperty = $this->woTPropertyManager->readOne($woTEvent->hasWoTProperty);
+                $property = $this->propertyManager->readOne($woTProperty->hasProperty);
                 $td["events"][$woTEvent->name] = [
-                    "title" => $woTEvent->description ?? $woTEvent->name
+                    "title" => $woTEvent->name,
+                    "description" => $woTEvent->description ?: $woTEvent->name,
+                    "data" => [
+                        "description" => $woTProperty->description ?: $woTProperty->name,
+                        "type" => $woTProperty->propertyType ?? strtolower($property->propertyNgsiLdValueType)
+                    ]
                 ];
+
+                if ($woTProperty->minimum !== null) {
+                    $td["events"][$woTEvent->name]["data"]["minimum"] = $woTProperty->minimum;
+                }
+
+                if ($woTProperty->maximum !== null) {
+                    $td["events"][$woTEvent->name]["data"]["maximum"] = $woTProperty->maximum;
+                }
+
+                if ($woTProperty->enum !== null) {
+                    $td["events"][$woTEvent->name]["data"]["enum"] = $woTProperty->enum;
+                }
             }
         }
 
